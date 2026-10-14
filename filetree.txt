@@ -1,0 +1,64 @@
+├── .gitignore
+├── /.snapshots/
+│  ├── config.json
+│  ├── readme.md
+│  └── sponsors.md
+├── /client/
+│  ├── .env
+│  ├── .env.example
+│  ├── /dist/
+│  │  ├── /assets/
+│  │  │  ├── index-BHqL7-f3.js
+│  │  │  └── index-D8ZaMoQn.css
+│  │  ├── favicon.svg
+│  │  └── index.html
+│  ├── index.html
+│  ├── /node_modules/
+│  ├── package-lock.json
+│  ├── package.json
+│  ├── /public/
+│  │  └── favicon.svg
+│  ├── /src/
+│  │  ├── App.jsx
+│  │  ├── /components/
+│  │  │  ├── Alert.jsx
+│  │  │  ├── DeleteConfirmModal.jsx
+│  │  │  ├── Navbar.jsx
+│  │  │  ├── ProtectedRoute.jsx
+│  │  │  ├── SearchFilter.jsx
+│  │  │  └── StudentFormModal.jsx
+│  │  ├── /context/
+│  │  │  └── AuthContext.jsx
+│  │  ├── index.css
+│  │  ├── main.jsx
+│  │  ├── /pages/
+│  │  │  ├── DashboardPage.jsx
+│  │  │  ├── LoginPage.jsx
+│  │  │  └── NotFoundPage.jsx
+│  │  ├── /services/
+│  │  │  └── api.js
+│  └── vite.config.js
+├── README.md
+├── /server/
+│  ├── .env
+│  ├── .env.example
+│  ├── /config/
+│  │  └── db.js
+│  ├── /controllers/
+│  │  ├── authController.js
+│  │  └── studentController.js
+│  ├── index.js
+│  ├── /middleware/
+│  │  ├── authMiddleware.js
+│  │  └── errorMiddleware.js
+│  ├── /models/
+│  │  └── Student.js
+│  ├── /node_modules/
+│  ├── package-lock.json
+│  ├── package.json
+│  ├── /routes/
+│  │  ├── authRoutes.js
+│  │  └── studentRoutes.js
+│  ├── /utils/
+│  │  └── generateHash.js
+│  └── vercel.json
