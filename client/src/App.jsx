@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -17,6 +18,18 @@ const App = () => {
         element={
           !loading && isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
         }
+      />
+
+      {/* Signup / Register Route */}
+      <Route
+        path="/signup"
+        element={
+          !loading && isAuthenticated ? <Navigate to="/" replace /> : <SignupPage />
+        }
+      />
+      <Route
+        path="/register"
+        element={<Navigate to="/signup" replace />}
       />
 
       {/* Protected Dashboard Route */}

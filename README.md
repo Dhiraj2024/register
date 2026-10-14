@@ -31,7 +31,7 @@ This application provides a complete student register for colleges, schools, or 
 - **Student CRUD**: Create, read (list), update, and delete student records (Name, Class, Roll Number, Address).
 - **Unique Roll Number Constraint**: Enforced at both the Mongoose schema layer and controller validation logic with friendly duplicate notices.
 - **Instant Search**: Real-time filter across student name, roll number, class, and address.
-- **Admin Authentication**: Secure JWT-based admin login using bcrypt password verification. Credentials managed via environment variables (no hardcoded credentials).
+- **Admin Signup & Login**: Admins can register with their own username and password, saved with bcrypt password hashing in MongoDB Atlas, and log in to obtain a JWT. Also includes fallback authentication to environment variables.
 - **Protected Routes**: Gated frontend dashboard with automatic redirection and session recovery; backend API endpoints protected via JWT verification middleware.
 - **Serverless-Ready**: Mongoose connection pooling and caching optimized for Vercel serverless environments.
 - **Responsive Dashboard**: Handcrafted plain CSS with KPI statistic cards, responsive table, modal dialogs, and toast notifications.
@@ -44,15 +44,16 @@ Register/
 │   ├── config/
 │   │   └── db.js                 # MongoDB connection with serverless connection caching
 │   ├── controllers/
-│   │   ├── authController.js     # Admin login and session verification logic
+│   │   ├── authController.js     # Admin signup, login, and session verification logic
 │   │   └── studentController.js  # Student CRUD operations and search logic
 │   ├── middleware/
 │   │   ├── authMiddleware.js     # JWT Bearer token verification middleware
 │   │   └── errorMiddleware.js    # Central error handler (CastError, duplicate key, validation)
 │   ├── models/
+│   │   ├── Admin.js              # Mongoose schema for persistent Admin accounts
 │   │   └── Student.js            # Mongoose schema for Student records
 │   ├── routes/
-│   │   ├── authRoutes.js         # /api/auth/login, /api/auth/me
+│   │   ├── authRoutes.js         # /api/auth/signup, /api/auth/login, /api/auth/me
 │   │   └── studentRoutes.js      # /api/students CRUD routes (protected)
 │   ├── utils/
 │   │   └── generateHash.js       # CLI helper to generate bcrypt password hashes
@@ -72,10 +73,11 @@ Register/
 │   │   │   ├── SearchFilter.jsx      # Search input with clear button
 │   │   │   └── StudentFormModal.jsx  # Modal form for adding and editing students
 │   │   ├── context/
-│   │   │   └── AuthContext.jsx       # Global auth state, login/logout methods
+│   │   │   └── AuthContext.jsx       # Global auth state, signup/login/logout methods
 │   │   ├── pages/
 │   │   │   ├── DashboardPage.jsx     # Main student registry dashboard with stats
 │   │   │   ├── LoginPage.jsx         # Admin login page
+│   │   │   ├── SignupPage.jsx        # Admin signup / registration page
 │   │   │   └── NotFoundPage.jsx      # 404 Not Found fallback page
 │   │   ├── services/
 │   │   │   └── api.js                # Central Axios instance with JWT interceptors
@@ -158,12 +160,6 @@ MONGO_URI=mongodb+srv://admin_user:YourActualPassword@cluster0.xxxxx.mongodb.net
 # JWT Secret Key (Use a long random string in production!)
 JWT_SECRET=helloman
 
-# Admin Login Username
-ADMIN_USERNAME=admin
-
-# Bcrypt Hash of the Admin Password (see Section 5 below)
-ADMIN_PASSWORD_HASH=$2a$10$doDgUO8Dv6tAb0LvgAroQ.QxTqAolM6Ezy29gBt1Z/YYOnMg30wzK
-
 # Allowed frontend URL for CORS (no trailing slash)
 CLIENT_URL=http://localhost:5173
 
@@ -177,42 +173,15 @@ PORT=5000
 
 ---
 
-## 5. How to Generate an Admin Bcrypt Password Hash
+## 5. Admin Signup and Authentication (MongoDB Atlas)
 
-The project includes a built-in CLI utility `server/utils/generateHash.js` to easily generate a secure bcrypt password hash using 10 salt rounds.
+Admin accounts are created and authenticated directly through MongoDB Atlas:
 
-### Command:
-
-Navigate to `server` or run from project root:
-
-#### PowerShell / CMD:
-```powershell
-cd server
-node utils/generateHash.js your_secure_password
-```
-
-#### Example Output:
-```text
---------------------------------------------------
-Bcrypt Password Hash Generator
---------------------------------------------------
-Hashing password: "your_secure_password"
-
-Generated Hash:
-$2a$10$7d3tU9sXGkM1sO28kYyN6uX5tQ...
-
-Add this to your server/.env or Vercel environment variables:
-ADMIN_PASSWORD_HASH=$2a$10$7d3tU9sXGkM1sO28kYyN6uX5tQ...
---------------------------------------------------
-```
-
-Copy the generated hash and set it as `ADMIN_PASSWORD_HASH` in `server/.env`.
-
-> [!NOTE]
-> The pre-configured default development credentials are:
-> - **Username**: `admin`
-> - **Password**: `admin123`
-> (Bcrypt hash: `$2a$10$doDgUO8Dv6tAb0LvgAroQ.QxTqAolM6Ezy29gBt1Z/YYOnMg30wzK`)
+1. **Sign Up**: Navigate to `/signup` in the frontend (or send a `POST` request to `/api/auth/signup`).
+2. **Set Credentials**: Choose your desired **Username** and a secure **Password** (minimum 6 characters).
+3. **Automatic Hashing**: The backend automatically hashes the password using `bcryptjs` with 10 salt rounds before persisting to the `admins` collection in MongoDB.
+4. **Immediate Access**: An authentication JWT is generated and stored in the client session upon registration, granting immediate access to the dashboard.
+5. **Login**: Admins can log in anytime at `/login` using their registered credentials.
 
 ---
 
@@ -312,8 +281,6 @@ Deploying the backend and frontend as two distinct Vercel projects provides isol
 7. Expand **Environment Variables** and add:
    - `MONGO_URI`: Your MongoDB Atlas connection string.
    - `JWT_SECRET`: A secure random string (e.g. 32+ characters).
-   - `ADMIN_USERNAME`: `admin` (or custom admin username).
-   - `ADMIN_PASSWORD_HASH`: Your bcrypt hash generated in Step 5.
    - `CLIENT_URL`: Temporary placeholder (e.g. `http://localhost:5173`), which you will update in Step 9.3 once frontend is deployed.
 8. Click **Deploy**.
 9. Once deployed, copy your backend URL (e.g. `https://student-register-api.vercel.app`).
@@ -350,8 +317,6 @@ Deploying the backend and frontend as two distinct Vercel projects provides isol
 | :--- | :--- | :--- | :--- | :--- |
 | **Backend** (`server`) | `MONGO_URI` | MongoDB Atlas Connection string | `mongodb+srv://...` | **No** (Secret) |
 | **Backend** (`server`) | `JWT_SECRET` | Secret key used to sign & verify JWT tokens | `k9#mP$2vL@8xZ...` | **No** (Secret) |
-| **Backend** (`server`) | `ADMIN_USERNAME` | Username for dashboard login | `admin` | **No** (Internal) |
-| **Backend** (`server`) | `ADMIN_PASSWORD_HASH` | Bcrypt hash of admin password | `$2a$10$...` | **No** (Secret) |
 | **Backend** (`server`) | `CLIENT_URL` | Allowed frontend origin for CORS | `https://your-app.vercel.app` | **No** (Internal) |
 | **Frontend** (`client`) | `VITE_API_URL` | Base URL of deployed backend | `https://your-api.vercel.app` | **Yes** (Client bundle) |
 
@@ -381,6 +346,7 @@ In serverless platforms like Vercel, serverless function invocations originate f
 | Method | Endpoint | Access | Purpose |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/health` | Public | System uptime & database connection status |
+| `POST` | `/api/auth/signup` | Public | Register new admin account & issue JWT token |
 | `POST` | `/api/auth/login` | Public | Authenticate admin & issue JWT token |
 | `GET` | `/api/auth/me` | Protected (JWT) | Verify active session & return admin user |
 | `GET` | `/api/students` | Protected (JWT) | List students (supports `?search=term`) |
@@ -396,12 +362,22 @@ In serverless platforms like Vercel, serverless function invocations originate f
 Invoke-RestMethod -Uri "http://localhost:5000/api/health" -Method Get
 ```
 
-#### 2. Test Admin Login:
+#### 2. Test Admin Signup:
+```powershell
+$signupResponse = Invoke-RestMethod -Uri "http://localhost:5000/api/auth/signup" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body '{"username":"principal_admin","password":"password123","fullName":"Principal Admin"}'
+
+Write-Host "New Admin Token: $($signupResponse.token)"
+```
+
+#### 3. Test Admin Login:
 ```powershell
 $response = Invoke-RestMethod -Uri "http://localhost:5000/api/auth/login" `
   -Method Post `
   -ContentType "application/json" `
-  -Body '{"username":"admin","password":"admin123"}'
+  -Body '{"username":"principal_admin","password":"password123"}'
 
 $token = $response.token
 Write-Host "JWT Token received: $token"
@@ -458,12 +434,11 @@ Invoke-RestMethod -Uri "http://localhost:5000/api/students?search=John" `
 - **Fix**: Verify `server/vercel.json` is present and routes all requests (`/(.*)`) to `index.js`. Ensure the backend root directory in Vercel is set to `server`.
 
 ### 5. Failed Admin Login (`401 Invalid username or password`)
-- **Symptom**: Login fails even with correct credentials.
+- **Symptom**: Login fails with `Invalid username or password`.
 - **Fix**:
-  1. Run `node utils/generateHash.js your_password` inside `server/`.
-  2. Copy the resulting hash to `ADMIN_PASSWORD_HASH` in `.env`.
-  3. Restart the backend server.
-  4. Ensure `ADMIN_USERNAME` in `.env` matches what you typed in the login form.
+  1. If you haven't created an admin account yet, navigate to `/signup` (or send a `POST` request to `/api/auth/signup`) to register your administrator username and password.
+  2. Ensure your MongoDB Atlas cluster is online and whitelisted (`0.0.0.0/0` under Network Access).
+  3. Usernames are case-insensitive; ensure your password is entered exactly as set during signup.
 
 ---
 

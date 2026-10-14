@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Alert from '../components/Alert';
 
 const LoginPage = () => {
-  const [username, setUsername] = useState('admin');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -151,16 +151,13 @@ const LoginPage = () => {
             </button>
           </form>
 
-          <div className="dev-credentials-hint">
-            <span className="hint-title">Default Development Credentials:</span>
-            <div className="hint-body">
-              <span>Username: <code>admin</code></span>
-              <span>Password: <code>admin123</code></span>
-            </div>
-            <p className="hint-note">
-              Configured securely via server environment variables.
-            </p>
+          <div className="auth-switch-box">
+            <span>New administrator? </span>
+            <Link to="/signup" className="auth-switch-link">
+              Create Admin Account
+            </Link>
           </div>
+
         </div>
       </div>
     </div>

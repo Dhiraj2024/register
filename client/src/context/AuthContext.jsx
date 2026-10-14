@@ -58,6 +58,23 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   /**
+   * Register a new admin account
+   */
+  const signup = async (username, password, fullName) => {
+    const response = await api.post('/api/auth/signup', { username, password, fullName });
+    const { token: receivedToken, admin: adminData } = response.data;
+
+    if (receivedToken) {
+      localStorage.setItem('student_reg_token', receivedToken);
+      localStorage.setItem('student_reg_admin', JSON.stringify(adminData));
+      setToken(receivedToken);
+      setAdmin(adminData);
+    }
+
+    return response.data;
+  };
+
+  /**
    * Log in with username and password
    */
   const login = async (username, password) => {
@@ -88,6 +105,7 @@ export const AuthProvider = ({ children }) => {
     admin,
     isAuthenticated: Boolean(token),
     loading,
+    signup,
     login,
     logout,
   };

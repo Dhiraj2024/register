@@ -36,7 +36,8 @@ const verifyAdminToken = (req, res, next) => {
     const decoded = jwt.verify(token, secret);
     // Attach decoded admin user to request object
     req.admin = {
-      username: decoded.username || process.env.ADMIN_USERNAME || 'admin',
+      id: decoded.id,
+      username: decoded.username,
       role: decoded.role || 'admin',
     };
     next();

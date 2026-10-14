@@ -57,21 +57,30 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ==========================================
-// 3. Database Connection Middleware for Student Routes
+// 3. Database Connection Middleware
 // ==========================================
 // Connects or reuses cached Mongoose connection in Vercel serverless environment
-app.use('/api/students', async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (error) {
-    console.error('[MongoDB Error in /api/students]:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to connect to MongoDB Atlas. Please check your MONGO_URI and Atlas Network Access whitelist.',
-      error: process.env.NODE_ENV === 'production' ? undefined : error.message,
-    });
+app.use(async (req, res, next) => {
+  // Allow health check and root info without DB connection
+  if (req.path === '/api/health' || req.path === '/') {
+    return next();
   }
+
+  if (req.path.startsWith('/api/')) {
+    try {
+      await connectDB();
+      return next();
+    } catch (error) {
+      console.error('[MongoDB Error in request pipeline]:', error.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to connect to MongoDB Atlas. Please check your MONGO_URI and Atlas Network Access whitelist.',
+        error: process.env.NODE_ENV === 'production' ? undefined : error.message,
+      });
+    }
+  }
+
+  next();
 });
 
 // ==========================================
@@ -83,7 +92,11 @@ app.get('/', (req, res) => {
     message: 'Student Register API is online and functional.',
     healthCheck: '/api/health',
     endpoints: {
-      auth: ['POST /api/auth/login', 'GET /api/auth/me'],
+      auth: [
+        'POST /api/auth/signup',
+        'POST /api/auth/login',
+        'GET /api/auth/me',
+      ],
       students: [
         'GET /api/students',
         'GET /api/students/:id',

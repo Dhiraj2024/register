@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { login, getMe } = require('../controllers/authController');
+const { signup, login, getMe } = require('../controllers/authController');
 const { verifyAdminToken } = require('../middleware/authMiddleware');
+
+// Public route: Admin signup / registration
+router.post('/signup', signup);
+router.post('/register', signup);
 
 // Public route: Admin login
 router.post('/login', login);
